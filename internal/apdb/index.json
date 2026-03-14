@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "base_url": "https://raw.githubusercontent.com/DS-Homebrew/nds-bootstrap/master/ips/",
+  "entries": [
+    {
+      "game_code": "IPKE",
+      "header_crc": "FFFF",
+      "file": "IPKE-FFFF.ips",
+      "title": "Pokemon SoulSilver (USA)",
+      "notes": "AP bypass patch"
+    },
+    {
+      "game_code": "IPGE",
+      "header_crc": "FFFF",
+      "file": "IPGE-FFFF.ips",
+      "title": "Pokemon HeartGold (USA)",
+      "notes": "AP bypass patch"
+    },
+    {
+      "game_code": "IRBO",
+      "header_crc": "FFFF",
+      "file": "IRBO-FFFF.ips",
+      "title": "Mario & Luigi: Bowser's Inside Story (USA)",
+      "notes": "AP bypass patch"
+    },
+    {
+      "game_code": "YRBE",
+      "header_crc": "FFFF",
+      "file": "YRBE-FFFF.ips",
+      "title": "Mario & Luigi: Partners in Time (USA)",
+      "notes": "AP bypass patch"
+    },
+    {
+      "game_code": "B6RE",
+      "header_crc": "FFFF",
+      "file": "B6RE-FFFF.ips",
+      "title": "Mega Man Zero Collection (USA)",
+      "notes": "AP bypass patch"
+    }
+  ]
+}

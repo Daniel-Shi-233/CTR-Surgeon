@@ -1,0 +1,14 @@
+; DS-Scene OpenPatch GameList Sample
+; Game: Pokemon Diamond
+
+[Pokemon Diamond (U)]
+save_type = 2
+
+00012FA8 = 64636FF3 -> 64646FF3
+000C3E20 = AABBCCDD → EEFF0011
+
+; Another game entry
+[Another Game (E)]
+save_type = 1
+
+00001000 = FF -> 00
