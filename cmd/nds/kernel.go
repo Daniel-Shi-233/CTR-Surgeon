@@ -239,12 +239,16 @@ func extractFile(f *zip.File, target string, maxFileSize int64) error {
 	if err != nil {
 		return err
 	}
-	defer outFile.Close()
 
 	// LimitReader caps the copy at maxFileSize+1 so we can detect overflow.
-	n, err := io.Copy(outFile, io.LimitReader(rc, maxFileSize+1))
-	if err != nil {
-		return err
+	// Close before any os.Remove so cleanup works on Windows too.
+	n, copyErr := io.Copy(outFile, io.LimitReader(rc, maxFileSize+1))
+	closeErr := outFile.Close()
+	if copyErr != nil {
+		return copyErr
+	}
+	if closeErr != nil {
+		return closeErr
 	}
 	if n > maxFileSize {
 		os.Remove(target)
