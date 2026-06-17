@@ -15,7 +15,7 @@ var (
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "显示版本信息",
+	Short: "show version information",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("ctr-surgeon %s (commit: %s, built: %s)\n", version, commit, date)
 	},

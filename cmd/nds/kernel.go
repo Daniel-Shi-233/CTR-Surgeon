@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/xingshiyu/ctr-surgeon/internal/ui"
+	"github.com/Daniel-Shi-233/CTR-Surgeon/internal/ui"
 )
 
 const (
@@ -25,14 +25,14 @@ const (
 
 var kernelCmd = &cobra.Command{
 	Use:   "kernel",
-	Short: "烧录卡内核管理",
+	Short: "flashcart kernel management",
 }
 
 var kernelUpdateCmd = &cobra.Command{
 	Use:   "update <sd_root>",
-	Short: "更新烧录卡内核 (Wood R4)",
+	Short: "update the flashcart kernel (Wood R4)",
 	Long: fmt.Sprintf(
-		"下载 Wood R4 v%s 并安装到 SD 卡。\n自动备份旧内核文件。",
+		"Download Wood R4 v%s and install it to the SD card.\nExisting kernel files are backed up automatically.",
 		woodR4Version,
 	),
 	Args: cobra.ExactArgs(1),
@@ -41,7 +41,7 @@ var kernelUpdateCmd = &cobra.Command{
 
 var kernelCheckCmd = &cobra.Command{
 	Use:   "check <sd_root>",
-	Short: "检查 SD 卡内核文件状态",
+	Short: "check the SD card kernel file status",
 	Args:  cobra.ExactArgs(1),
 	RunE:  runKernelCheck,
 }
@@ -55,7 +55,7 @@ func init() {
 func runKernelCheck(cmd *cobra.Command, args []string) error {
 	sdRoot := args[0]
 
-	fmt.Println(ui.TitleStyle.Render("烧录卡内核检查"))
+	fmt.Println(ui.TitleStyle.Render("Flashcart kernel check"))
 	fmt.Println()
 
 	checkFile(sdRoot, dsmenuFile)
@@ -70,7 +70,7 @@ func checkFile(sdRoot, name string) {
 	if info, err := os.Stat(path); err == nil {
 		fmt.Printf("  %s %s (%d bytes)\n", ui.IconOK, name, info.Size())
 	} else {
-		fmt.Printf("  %s %s 不存在\n", ui.IconFail, name)
+		fmt.Printf("  %s %s missing\n", ui.IconFail, name)
 	}
 }
 
@@ -79,7 +79,7 @@ func checkDir(sdRoot, name string) {
 	if info, err := os.Stat(path); err == nil && info.IsDir() {
 		fmt.Printf("  %s %s/\n", ui.IconOK, name)
 	} else {
-		fmt.Printf("  %s %s/ 不存在\n", ui.IconFail, name)
+		fmt.Printf("  %s %s/ missing\n", ui.IconFail, name)
 	}
 }
 
@@ -88,30 +88,30 @@ func runKernelUpdate(cmd *cobra.Command, args []string) error {
 
 	// Verify SD root exists.
 	if _, err := os.Stat(sdRoot); err != nil {
-		return fmt.Errorf("SD 卡路径不存在: %s", sdRoot)
+		return fmt.Errorf("SD card path does not exist: %s", sdRoot)
 	}
 
-	fmt.Printf("%s 下载内核更新包...\n", ui.IconInfo)
+	fmt.Printf("%s downloading kernel update package...\n", ui.IconInfo)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
 	zipData, err := downloadFile(ctx, woodR4URL)
 	if err != nil {
-		return fmt.Errorf("下载失败: %w", err)
+		return fmt.Errorf("download failed: %w", err)
 	}
-	fmt.Printf("%s 下载完成 (%d bytes)\n", ui.IconOK, len(zipData))
+	fmt.Printf("%s download complete (%d bytes)\n", ui.IconOK, len(zipData))
 
 	// Write to temp file for zip.Reader.
 	tmpFile, err := os.CreateTemp("", "ctr-surgeon-kernel-*.zip")
 	if err != nil {
-		return fmt.Errorf("创建临时文件失败: %w", err)
+		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer os.Remove(tmpFile.Name())
 	defer tmpFile.Close()
 
 	if _, err := tmpFile.Write(zipData); err != nil {
-		return fmt.Errorf("写入临时文件失败: %w", err)
+		return fmt.Errorf("failed to write temp file: %w", err)
 	}
 
 	// Backup existing files.
@@ -119,12 +119,12 @@ func runKernelUpdate(cmd *cobra.Command, args []string) error {
 	backupExisting(sdRoot, backupDir)
 
 	// Extract zip to SD root.
-	fmt.Printf("%s 解压到 %s...\n", ui.IconInfo, sdRoot)
+	fmt.Printf("%s extracting to %s...\n", ui.IconInfo, sdRoot)
 	if err := extractZip(tmpFile.Name(), sdRoot); err != nil {
-		return fmt.Errorf("解压失败: %w", err)
+		return fmt.Errorf("extraction failed: %w", err)
 	}
 
-	fmt.Printf("%s 内核更新完成\n", ui.IconOK)
+	fmt.Printf("%s kernel update complete\n", ui.IconOK)
 	return nil
 }
 
@@ -162,7 +162,7 @@ func backupExisting(sdRoot, backupDir string) {
 		return
 	}
 
-	fmt.Printf("%s 备份旧内核文件到 %s\n", ui.IconInfo, filepath.Base(backupDir))
+	fmt.Printf("%s backing up old kernel files to %s\n", ui.IconInfo, filepath.Base(backupDir))
 	os.MkdirAll(backupDir, 0755)
 
 	for _, name := range targets {
