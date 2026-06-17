@@ -48,7 +48,7 @@ func TestCheckSDFullyPopulated(t *testing.T) {
 	dirFileChecks := 0
 	passed := 0
 	for _, c := range report.Checks {
-		if c.Name != "可用空间" {
+		if c.Name != "Free space" {
 			dirFileChecks++
 			if c.OK {
 				passed++
@@ -67,7 +67,7 @@ func TestCheckSDEmpty(t *testing.T) {
 
 	// All directory/file checks should fail on empty dir.
 	for _, c := range report.Checks {
-		if c.Name != "可用空间" {
+		if c.Name != "Free space" {
 			assert.False(t, c.OK, "expected %s to fail", c.Name)
 		}
 	}

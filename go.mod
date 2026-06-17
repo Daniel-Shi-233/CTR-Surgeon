@@ -1,4 +1,4 @@
-module github.com/xingshiyu/ctr-surgeon
+module github.com/Daniel-Shi-233/CTR-Surgeon
 
 go 1.25.6
 

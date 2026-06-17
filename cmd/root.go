@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/xingshiyu/ctr-surgeon/cmd/fat32"
-	"github.com/xingshiyu/ctr-surgeon/cmd/luma"
-	"github.com/xingshiyu/ctr-surgeon/cmd/nds"
+	"github.com/Daniel-Shi-233/CTR-Surgeon/cmd/fat32"
+	"github.com/Daniel-Shi-233/CTR-Surgeon/cmd/luma"
+	"github.com/Daniel-Shi-233/CTR-Surgeon/cmd/nds"
 )
 
 var (
@@ -17,13 +17,13 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:   "ctr-surgeon",
-	Short: "CTR-Surgeon — 3DS/NDS 急救箱",
-	Long:  "跨平台 CLI 工具，自动化处理字库挂载、AP 补丁注入、烧录卡内核升级。",
+	Short: "CTR-Surgeon — 3DS/NDS first-aid kit",
+	Long:  "Cross-platform CLI for automating font installation, AP patch injection, and flashcart kernel upgrades.",
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "启用详细输出")
-	rootCmd.PersistentFlags().StringVar(&sdRoot, "sd-root", "", "SD 卡根目录路径")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
+	rootCmd.PersistentFlags().StringVar(&sdRoot, "sd-root", "", "path to the SD card root")
 
 	rootCmd.AddCommand(nds.Cmd)
 	rootCmd.AddCommand(luma.Cmd)

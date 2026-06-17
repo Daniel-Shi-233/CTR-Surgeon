@@ -27,10 +27,10 @@ var criticalDirs = []struct {
 	Path string
 	Desc string
 }{
-	{"Nintendo 3DS", "3DS 系统数据目录"},
-	{"luma", "Luma3DS 配置目录"},
-	{"_nds", "NDS 工具链目录"},
-	{"__rpg", "烧录卡内核目录"},
+	{"Nintendo 3DS", "3DS system data directory"},
+	{"luma", "Luma3DS config directory"},
+	{"_nds", "NDS toolchain directory"},
+	{"__rpg", "flashcart kernel directory"},
 }
 
 // Critical files that should exist.
@@ -38,7 +38,7 @@ var criticalFiles = []struct {
 	Path string
 	Desc string
 }{
-	{"boot.firm", "Luma3DS 引导文件"},
+	{"boot.firm", "Luma3DS boot file"},
 	{"boot.3dsx", "Homebrew Launcher"},
 }
 
@@ -51,10 +51,10 @@ func CheckSD(sdRoot string) (*SDReport, error) {
 	// Check if path exists and is a directory.
 	info, err := os.Stat(sdRoot)
 	if err != nil {
-		return nil, fmt.Errorf("无法访问路径: %w", err)
+		return nil, fmt.Errorf("cannot access path: %w", err)
 	}
 	if !info.IsDir() {
-		return nil, fmt.Errorf("路径不是目录: %s", sdRoot)
+		return nil, fmt.Errorf("path is not a directory: %s", sdRoot)
 	}
 
 	// Check critical directories.
@@ -64,13 +64,13 @@ func CheckSD(sdRoot string) (*SDReport, error) {
 			report.Checks = append(report.Checks, CheckResult{
 				Name:    d.Desc,
 				OK:      true,
-				Message: d.Path + "/ 存在",
+				Message: d.Path + "/ exists",
 			})
 		} else {
 			report.Checks = append(report.Checks, CheckResult{
 				Name:    d.Desc,
 				OK:      false,
-				Message: d.Path + "/ 不存在",
+				Message: d.Path + "/ missing",
 			})
 		}
 	}
@@ -88,7 +88,7 @@ func CheckSD(sdRoot string) (*SDReport, error) {
 			report.Checks = append(report.Checks, CheckResult{
 				Name:    f.Desc,
 				OK:      false,
-				Message: f.Path + " 不存在",
+				Message: f.Path + " missing",
 			})
 		}
 	}
@@ -97,12 +97,12 @@ func CheckSD(sdRoot string) (*SDReport, error) {
 	if freeBytes, err := getFreeSpace(sdRoot); err == nil {
 		freeMB := freeBytes / (1024 * 1024)
 		ok := freeMB > 100
-		msg := fmt.Sprintf("%d MB 可用", freeMB)
+		msg := fmt.Sprintf("%d MB free", freeMB)
 		if !ok {
-			msg += " (建议 > 100 MB)"
+			msg += " (recommend > 100 MB)"
 		}
 		report.Checks = append(report.Checks, CheckResult{
-			Name:    "可用空间",
+			Name:    "Free space",
 			OK:      ok,
 			Message: msg,
 		})

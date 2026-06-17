@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	fat32lib "github.com/xingshiyu/ctr-surgeon/internal/fat32"
-	"github.com/xingshiyu/ctr-surgeon/internal/ui"
+	fat32lib "github.com/Daniel-Shi-233/CTR-Surgeon/internal/fat32"
+	"github.com/Daniel-Shi-233/CTR-Surgeon/internal/ui"
 )
 
 var (
@@ -15,15 +15,15 @@ var (
 
 var checkCmd = &cobra.Command{
 	Use:   "check [path]",
-	Short: "SD 卡健康检查",
-	Long:  "检查 SD 卡的关键目录和文件是否完整。",
+	Short: "SD card health check",
+	Long:  "Verify that the SD card's critical directories and files are present.",
 	Args:  cobra.MaximumNArgs(1),
 	RunE:  runCheck,
 }
 
 func init() {
-	checkCmd.Flags().BoolVar(&checkAuto, "auto", false, "自动检测 SD 卡")
-	checkCmd.Flags().BoolVar(&checkJSON, "json", false, "以 JSON 格式输出")
+	checkCmd.Flags().BoolVar(&checkAuto, "auto", false, "auto-detect SD cards")
+	checkCmd.Flags().BoolVar(&checkJSON, "json", false, "output as JSON")
 	Cmd.AddCommand(checkCmd)
 }
 
@@ -35,11 +35,11 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	} else if checkAuto {
 		paths = fat32lib.DetectSDCards()
 		if len(paths) == 0 {
-			fmt.Printf("%s 未检测到 SD 卡\n", ui.IconWarn)
+			fmt.Printf("%s no SD card detected\n", ui.IconWarn)
 			return nil
 		}
 	} else {
-		return fmt.Errorf("请指定 SD 卡路径或使用 --auto 自动检测")
+		return fmt.Errorf("specify an SD card path or use --auto to detect one")
 	}
 
 	for _, path := range paths {
@@ -49,7 +49,7 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		fmt.Println(ui.TitleStyle.Render(fmt.Sprintf("SD 卡检查: %s", report.Path)))
+		fmt.Println(ui.TitleStyle.Render(fmt.Sprintf("SD card check: %s", report.Path)))
 		fmt.Println()
 
 		for _, c := range report.Checks {
@@ -64,9 +64,9 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		passed := report.PassCount()
 		fmt.Println()
 		if passed == total {
-			fmt.Printf("  %s 全部通过 (%d/%d)\n", ui.IconOK, passed, total)
+			fmt.Printf("  %s all passed (%d/%d)\n", ui.IconOK, passed, total)
 		} else {
-			fmt.Printf("  %s 通过 %d/%d 项检查\n", ui.IconWarn, passed, total)
+			fmt.Printf("  %s passed %d/%d checks\n", ui.IconWarn, passed, total)
 		}
 		fmt.Println()
 	}
