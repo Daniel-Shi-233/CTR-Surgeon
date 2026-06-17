@@ -21,6 +21,9 @@ const (
 	// Key files to look for after extraction.
 	dsmenuFile = "_DSMENU.DAT"
 	rpgDir     = "__rpg"
+	// maxKernelFileSize caps a single extracted entry, guarding against
+	// decompression bombs in a tampered or MITM'd archive.
+	maxKernelFileSize = 64 << 20 // 64 MiB
 )
 
 var kernelCmd = &cobra.Command{
@@ -114,9 +117,12 @@ func runKernelUpdate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to write temp file: %w", err)
 	}
 
-	// Backup existing files.
+	// Backup existing files. Abort before extracting if the backup fails, so
+	// we never clobber the user's existing kernel without a copy.
 	backupDir := filepath.Join(sdRoot, "_backup_kernel_"+time.Now().Format("20060102_150405"))
-	backupExisting(sdRoot, backupDir)
+	if err := backupExisting(sdRoot, backupDir); err != nil {
+		return fmt.Errorf("backup failed, aborting before extraction: %w", err)
+	}
 
 	// Extract zip to SD root.
 	fmt.Printf("%s extracting to %s...\n", ui.IconInfo, sdRoot)
@@ -147,7 +153,7 @@ func downloadFile(ctx context.Context, url string) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-func backupExisting(sdRoot, backupDir string) {
+func backupExisting(sdRoot, backupDir string) error {
 	targets := []string{dsmenuFile, rpgDir}
 	needsBackup := false
 
@@ -159,37 +165,52 @@ func backupExisting(sdRoot, backupDir string) {
 	}
 
 	if !needsBackup {
-		return
+		return nil
 	}
 
 	fmt.Printf("%s backing up old kernel files to %s\n", ui.IconInfo, filepath.Base(backupDir))
-	os.MkdirAll(backupDir, 0755)
+	if err := os.MkdirAll(backupDir, 0755); err != nil {
+		return fmt.Errorf("failed to create backup dir: %w", err)
+	}
 
 	for _, name := range targets {
 		src := filepath.Join(sdRoot, name)
 		dst := filepath.Join(backupDir, name)
 		if _, err := os.Stat(src); err == nil {
-			os.Rename(src, dst)
+			if err := os.Rename(src, dst); err != nil {
+				return fmt.Errorf("failed to back up %s: %w", name, err)
+			}
 		}
 	}
+
+	return nil
 }
 
 func extractZip(zipPath, destDir string) error {
+	return extractZipLimited(zipPath, destDir, maxKernelFileSize)
+}
+
+func extractZipLimited(zipPath, destDir string, maxFileSize int64) error {
 	r, err := zip.OpenReader(zipPath)
 	if err != nil {
 		return err
 	}
 	defer r.Close()
 
+	cleanDest := filepath.Clean(destDir)
 	for _, f := range r.File {
-		// Sanitize path to prevent zip slip.
+		// Sanitize path to prevent zip slip. filepath.Join cleans the result,
+		// so an entry escaping destDir (e.g. "../x") fails the prefix check.
 		target := filepath.Join(destDir, f.Name)
-		if !strings.HasPrefix(filepath.Clean(target), filepath.Clean(destDir)+string(os.PathSeparator)) {
+		if target != cleanDest && !strings.HasPrefix(target, cleanDest+string(os.PathSeparator)) {
+			fmt.Printf("%s skipping unsafe path in archive: %q\n", ui.IconWarn, f.Name)
 			continue
 		}
 
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(target, 0755)
+			if err := os.MkdirAll(target, 0755); err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -197,23 +218,37 @@ func extractZip(zipPath, destDir string) error {
 			return err
 		}
 
-		outFile, err := os.Create(target)
-		if err != nil {
+		if err := extractFile(f, target, maxFileSize); err != nil {
 			return err
 		}
+	}
 
-		rc, err := f.Open()
-		if err != nil {
-			outFile.Close()
-			return err
-		}
+	return nil
+}
 
-		_, err = io.Copy(outFile, rc)
-		rc.Close()
-		outFile.Close()
-		if err != nil {
-			return err
-		}
+// extractFile writes a single zip entry to target, refusing to copy more than
+// maxFileSize bytes to guard against decompression bombs.
+func extractFile(f *zip.File, target string, maxFileSize int64) error {
+	rc, err := f.Open()
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
+	outFile, err := os.Create(target)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	// LimitReader caps the copy at maxFileSize+1 so we can detect overflow.
+	n, err := io.Copy(outFile, io.LimitReader(rc, maxFileSize+1))
+	if err != nil {
+		return err
+	}
+	if n > maxFileSize {
+		os.Remove(target)
+		return fmt.Errorf("archive entry %q exceeds size limit of %d bytes", f.Name, maxFileSize)
 	}
 
 	return nil
